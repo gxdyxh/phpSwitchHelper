@@ -1,0 +1,280 @@
+import win.ui;
+/*DSG{{*/
+mainForm = win.form(text="PHP Switch";right=328;bottom=487;border="thin";max=false)
+/*}}*/
+
+import console;
+import environment;
+
+import wsock.tcp.simpleHttpServer;
+import fsys.file;
+/*
+import py3; 
+*/
+import process;
+import inet.url;
+import process.popen;
+import string;
+//创建下载线程管理器
+import thread.dlManager;
+var dlmgr = thread.dlManager(5/*最多允许五个线程同时下载*/);
+
+//窗口设置原子值
+import win.ui.atom   
+var atom,hwndConflict = mainForm.atom("2475484B-9952-466B-AAA1-BD209D02D6DD");  
+if(!atom){  
+    /*为窗口设置原子值可以避免一个程序重复运行多个实例*/  
+    win.quitMessage();//程序退出  
+    return;  
+};
+
+import web.view;
+var theView  = web.view(mainForm); 
+
+
+
+ 
+//多线程回调 
+import thread.command;
+var listener = thread.command();
+listener.saveVerList = function( data ){
+   string.save('/verlist.json',data)
+}
+
+
+//环境变量 https://bbs.aardio.com/forum.php?mod=viewthread&tid=9740
+function setUserEnv(path){
+	//读环境变量
+	//var pathEnv = environment.user().get("PATH");
+	//检查有没有设置过环境变量
+	//var i,j = string.find(pathEnv ,"\%PHP_LINE\%");
+	if(table.indexOf(win.path.get(),'\%PHP_LINK\%')){
+		//写环境变量
+		var pathEnv = environment.system().set("PATH","%PHP_LINK%;"+pathEnv);
+		environment.system().set('path',"%PHP_LINK%;"+pathEnv)
+	}
+	environment.system().set("PHP_LINK",path);
+	//通知系统更新
+	environment.system().update();
+	
+}
+
+function getPhpVer(path=''){
+	path = string.trimright(path,"/");
+	path = string.trimright(path,"/exe.php");
+	if(path){
+	  path	= path + "/";
+	}
+	res = process.popen(path + 'php.exe -r "echo PHP_VERSION";'); 
+	return res.read(-1);
+}
+
+
+/***
+function getVerList(){
+pyCode = /**
+def get_ver_list():
+	import urllib.request
+	import re
+	pattern = re.compile('<A.*?HREF="/downloads/releases/archives/(.*?)".*?>(php-[7|8].*?[x64|x86]).zip</A>',flags=re.IGNORECASE)
+	res = urllib.request.urlopen('https://windows.php.net/downloads/releases/archives/').read().decode("utf-8")
+	alist = re.findall('<A.*?>.*?</A>',res,flags=re.IGNORECASE)
+	adict = {}
+	for item in alist:
+		a = re.search(pattern,item)
+		if a:
+			m = a.groups()
+			adict[m[1]] = m[0]
+	return adict
+**/
+py3.exec(pyCode)
+return py3.main.get_ver_list()
+}
+***/
+
+
+//应用启动前文件检测 - 配置文件
+if(!io.exist("config.json")){
+	fsys.file("config.json","w+");
+}
+
+var confStr = string.load("config.json")
+
+//应用启动前文件检测 - 版本列表
+/*
+if(!io.exist("verlist.json")){
+	//创建工作线程
+	thread.invoke(
+    	function(getVerList){
+        	//必须在线程函数内部导入需要的库
+        	import thread.command;
+        	import web.json;
+        	//调用界面线程的命令
+        	thread.command.saveVerList( web.json.stringify(getVerList()));
+        	
+    	},getVerList
+	)
+
+}
+*/
+
+//下载开始触发
+dlmgr.onReceiveBegin = function(id,url,filename,statusText,httpStatusCode,totalSize,downSize){
+    //winform.listview.setItemText( {url;filename;statusText;fsys.formatSize(totalSize);fsys.formatSize(downSize) },id )
+    //console.log('Start:'+id+' - ' + totalSize)
+    theView.doScript("
+			setDownStart('"+id+"','"+totalSize+"');
+	")
+}
+
+//正在下载触发
+dlmgr.onReceive = function(id,sizePs,downSize){
+    //winform.listview.setItemText( fsys.formatSize(downSize),id,6);
+    //winform.listview.setItemText( fsys.formatSize(sizePs) + "/s" ,id,5); 
+    //console.log('Ing:'+id+' - ' + downSize)
+    theView.doScript("
+			setDownPercent('"+id+"','"+downSize+"','"+fsys.formatSize(sizePs)+"');
+	")
+}
+
+//下载停止触发
+dlmgr.onEnd = function(id,savepath,resumePath,contentLength){ 
+	if( savepath ){ 
+       // winform.listview.setItemText(  "已完成"  ,id,3);
+       // winform.li*/stview.setItemText( fsys.formatSize(contentLength),id,4);
+       //console.log('Competed:'+id+' - 100%')
+        theView.doScript("
+			setDownCompeted('"+id+"','下载完成解压中');
+		")
+		unzipFile(id)
+		//删除下载文件
+		//fsys.delete(resumePath)
+    }
+    else {
+        // winform.listview.setItemText(  "已停止"  ,id,3);
+        //console.log('End:'+id+' - 100%')
+         theView.doScript("
+			setDownEnd('"+id+"','下载已停止');
+		")
+		//fsys.delete(resumePath)
+    }
+    
+    //winform.listview.setItemText(  "0KB/s"  ,id,5);
+    //winform.listview.setItemText( "",id,6); 
+    
+    //fsys.delete(resumePath)
+}
+
+//下载出错触发
+dlmgr.onError = function(id,err){
+    //winform.listview.setItemText( err,id,3);
+     console.log(id,err)
+     theView.doScript("
+			setDownErr('"+id+"','下载出错了');
+	")
+}
+//解压zip文件
+function unzipFile(key){
+	import zlib.unzip;
+	zlib.unzip.extract("/php/"+key+".zip","/php/"+key,,,
+    function(numEntries){
+        //console.log(fsys.getCurDir() + "/php/"+ key)
+        var pathDir = io.localpath("/php/"+ key); 
+    		//console.log(inet.url.encodeUri(pathDir))
+           theView.doScript("
+			setUzipCompeted('"+key+"','"+inet.url.encodeUri(pathDir)+"');
+		")
+    })
+}
+
+ 
+//导出为 JavaScript 中的 aardio 对象 供js调用
+theView.external = {
+    hello = function(){
+       return "You did it!" ;
+    };
+    saveData = function(data){
+        confStr = data;
+        string.save("/config.json",data )
+    };
+    setPathEnv=function(path){
+    	setUserEnv(path)
+    };
+    startDown = function(key,path){
+		//todo 检查文件夹是否存在	
+		dlmgr.push( 
+        			id = key;
+        			url = "https://windows.php.net/downloads/releases/archives/"+path; 
+        			savedir = "/php/"+key+".zip"; //文件名可以省略
+    			)
+
+
+ 
+    }
+    openDir = function(dirPath){
+        if(fsys.isDir(dirPath)){
+        	process( "explorer","/n,"+dirPath );
+        	return true;
+        }
+    };
+    localPhp=function(){
+    	import fsys.dlg
+		path = fsys.dlg.open("php.exe|php.exe")
+		if(path){
+			version = getPhpVer(path)
+			ppath = fsys.getParentDir(path)
+			
+			//theView.doScript("addLocalPhp('"+inet.url.encodeUri(ppath)+"','"+version+"');")
+			
+			//theView.doScript()("addLocalPhp")
+			return {inet.url.encodeUri(ppath),version};
+			//return version; 
+		}
+		
+    };
+    getPhpVersion=function(path){
+		return getPhpVer(path); 
+    };
+    getConfList=function(){
+    	//return fsys.file('config.json').readAll();
+    	//return string.load("config.json");
+    	return confStr;
+    };
+    getVerList=function(){
+        if(io.exist("verlist.json")){
+            //return fsys.file('verlist.json').readAll();
+            return  string.load("verlist.json");
+        }
+    };
+}
+
+
+/*
+如果导入 simpleHttpServer，则单个斜杠开头的路径会转换为嵌入式 HTTP 地址，
+如果同时文件名为 index.html ，则上级目录自动设为根目录，前端应用发布根目录使用默认的 "/" 即可，不需要改动。
+
+去掉下面的前端项目调试端口号 37161 或发布 EXE 后运行才会打开 "\web\index.html"。
+否则打开 http://localhost:37161
+*/
+theView.go("\web\index.aardio",8080);
+ 
+//页面加载完成后执行
+/*
+theView.waitEle("#inited",function(ok,err){
+	var conf = fsys.file('config.json').readAll();
+	if(conf){
+		theView.doScript("
+			initListData("+conf+");
+		")
+	}	
+})
+*/
+
+//关闭窗体时停止所有下载
+import thread.event;
+mainForm.onClose = function(hwnd,message,wParam,lParam){
+    dlmgr.quit();
+}
+
+mainForm.show();
+win.loopMessage();

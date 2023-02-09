@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<project ver="10" name="phpSwitch" libEmbed="true" icon="..." ui="win" output="phpSwitch.exe" CompanyName="aardio" FileDescription="phpSwitch" LegalCopyright="Copyright (C) 作者 2023" ProductName="phpSwitch" InternalName="phpSwitch" FileVersion="0.0.0.17" ProductVersion="0.0.0.17" publishDir="/dist/" dstrip="false" local="true" ignored="true">
+	<file name="main" path="main.aardio"/>
+	<folder name="窗体" path="forms" comment="" embed="true" local="false" ignored="true"/>
+	<folder name="网页" path="web" embed="true" comment="目录" local="false" ignored="false">
+		<file name="favicon.ico" path="web\favicon.ico" comment="web\favicon.ico"/>
+		<file name="index.aardio" path="web\index.aardio" comment="web\index.aardio"/>
+		<folder name="css" path="web\css" comment="web\css">
+			<file name="app.fe7eeac1.css" path="web\css\app.fe7eeac1.css" comment="web\css\app.fe7eeac1.css"/>
+			<file name="chunk-vendors.61c7b223.css" path="web\css\chunk-vendors.61c7b223.css" comment="web\css\chunk-vendors.61c7b223.css"/>
+		</folder>
+		<folder name="js" path="web\js" comment="web\js">
+			<file name="about.cc2b7354.js" path="web\js\about.cc2b7354.js" comment="web\js\about.cc2b7354.js"/>
+			<file name="app.7e29cf58.js" path="web\js\app.7e29cf58.js" comment="web\js\app.7e29cf58.js"/>
+			<file name="chunk-vendors.4fdde7cd.js" path="web\js\chunk-vendors.4fdde7cd.js" comment="web\js\chunk-vendors.4fdde7cd.js"/>
+		</folder>
+	</folder>
+	<folder name="网页源码" path="web.src" embed="false" comment="目录" local="false" ignored="true"/>
+	<file name="verlist.json" path="verlist.json" comment="verlist.json"/>
+	<folder name="lib" path="lib" comment="lib">
+		<file name="config.aardio" path="lib\config.aardio" comment="lib\config.aardio"/>
+		<folder name="fonts" path="lib\fonts" comment="lib\fonts"/>
+	</folder>
+</project>
