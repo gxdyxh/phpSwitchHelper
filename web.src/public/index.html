@@ -35,6 +35,18 @@
         }
 
     </style>
+      <script>
+          //屏蔽F5 F12
+          document.onkeydown  = function  (e){
+              var e = e || event;
+              var nums = [116,123]; //f5:116  f12:123
+              for(var i in nums){
+                  if(e.keyCode == nums[i]){
+                      return false;
+                  }
+              }
+          }
+      </script>
   </head>
   <body>
     <noscript>

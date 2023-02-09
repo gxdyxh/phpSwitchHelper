@@ -18,15 +18,21 @@
             <a-input v-model:value="search.key" />
           </a-form-item>
           <a-form-item label="线程:">
-            <a-radio-group v-model:value="search.nts">
-              <a-radio value="1">NT</a-radio>
+            <a-radio-group v-model:value="search.nts" size="small">
               <a-radio value="2">NTS</a-radio>
+              <a-radio value="1">NT</a-radio>
               <a-radio value="3">ALL</a-radio>
+            </a-radio-group>
+          </a-form-item>
+          <a-form-item label="位数:">
+            <a-radio-group v-model:value="search.bit" size="small">
+              <a-radio value="64">X64</a-radio>
+              <a-radio value="86">X86</a-radio>
             </a-radio-group>
           </a-form-item>
         </a-form>
       </div>
-      <div style="height: calc(100% - 82px); overflow-y: auto">
+      <div style="height: calc(100% - 120px); overflow-y: auto">
         <div v-for="(item, key) in show_list" :key="key" class="ver-item">
           <div>
             {{ key }}
@@ -53,7 +59,7 @@ const props = defineProps({
   keys: [],
 });
 
-let search = reactive({ key: "", nts: "2" });
+let search = reactive({ key: "", nts: "2", bit: "64" });
 let loaded = ref(false);
 
 const labelCol = { style: { width: "40px" } };
@@ -62,7 +68,6 @@ const wrapperCol = { style: { width: "250px" } };
 let onLineVers = reactive({});
 
 async function getVerLists() {
-  console.log(props.keys);
   const list = await window.aardio.getVerList();
   onLineVers.vaule = JSON.parse(list);
   loaded.value = true;
@@ -90,6 +95,7 @@ const show_list = computed(() => {
   for (const mapKey in onLineVers.vaule) {
     let k1 = true;
     let k2 = true;
+    let k3 = true;
     if (search.key) {
       k1 = mapKey.indexOf(search.key) > -1;
     }
@@ -98,7 +104,12 @@ const show_list = computed(() => {
     } else if (search.nts == 2) {
       k2 = mapKey.indexOf("-nts") > 0;
     }
-    if (k1 && k2) {
+    if (search.bit == "64") {
+      k3 = mapKey.indexOf("-x64") > -1;
+    } else {
+      k3 = mapKey.indexOf("-x86") > -1;
+    }
+    if (k1 && k2 && k3) {
       map[mapKey] = {
         code: mapKey,
         url: onLineVers.vaule[mapKey],
