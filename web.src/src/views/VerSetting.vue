@@ -11,11 +11,11 @@
       <a-empty>
         <template #description>
           <p>
-            请在添加
+            请在
             <a-button type="link" @click="$emit('selectOnline')">列表</a-button>
             /
             <a-button type="link" @click="$emit('selectLocal')">本地</a-button>
-            的php
+            添加php
           </p>
         </template>
       </a-empty>
@@ -34,7 +34,6 @@
       />
     </template>
   </template>
-  {{ confList }}
 </template>
 <script setup>
 import { reactive, getCurrentInstance, defineExpose, inject } from "vue";
@@ -112,8 +111,6 @@ function delItem(item) {
   state.list = state.list.filter((v) => v != item);
   saveConfData(state.list);
 }
-
-///defineExpose({ getConfList, setConfList });
 </script>
 
 <style scoped></style>

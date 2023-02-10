@@ -1,6 +1,6 @@
 <template>
   <div class="card-container">
-    <a-tabs v-model:activeKey="activeKey" type="card" @change="tabSelect">
+    <a-tabs v-model:activeKey="activeKey" type="card">
       <template #rightExtra>
         <a-button type="link" @click="selectLocalPhp">
           <template #icon>
@@ -18,7 +18,6 @@
         </template>
         <div style="height: 100%; overflow-y: auto">
           <ver-setting
-            ref="confListRef"
             @selectLocal="selectLocalPhp"
             @selectOnline="setOnline"
           />
@@ -33,7 +32,7 @@
           </span>
         </template>
         <div style="height: 100%; overflow-y: auto">
-          <ver-list ref="verListRef" :keys="confKeys" @addLine="addOnLine" />
+          <ver-list :keys="confKeys" @addLine="addOnLine" />
         </div>
       </a-tab-pane>
     </a-tabs>
@@ -74,7 +73,7 @@
   </a-modal>
 </template>
 <script setup>
-import { reactive, ref, nextTick, computed, provide } from "vue";
+import { reactive, ref, computed, provide } from "vue";
 
 import {
   SettingOutlined,
@@ -89,9 +88,6 @@ import VerSetting from "@/views/VerSetting";
 const formRef = ref(null);
 const activeKey = ref("1");
 let actmodel = ref(false);
-
-const confListRef = ref(null);
-const verListRef = ref(null);
 
 let editPhp = reactive({});
 
@@ -153,15 +149,6 @@ function addOnLine(item) {
     current: 0,
     url: item.url,
   };
-}
-
-async function tabSelect(i) {
-  if (i == 2) {
-    //console.log(verListRef.value);
-    nextTick(() => {
-      verListRef.value.getVerLists();
-    });
-  }
 }
 
 function saveConfData(data) {

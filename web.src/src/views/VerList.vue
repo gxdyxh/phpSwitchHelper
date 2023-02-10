@@ -52,7 +52,7 @@
   </div>
 </template>
 <script name="VerList" setup>
-import { reactive, ref, computed, defineProps, defineExpose, watch } from "vue";
+import { reactive, ref, computed, defineProps } from "vue";
 import { PlusSquareOutlined } from "@ant-design/icons-vue";
 
 const props = defineProps({
@@ -65,7 +65,7 @@ let loaded = ref(false);
 const labelCol = { style: { width: "40px" } };
 const wrapperCol = { style: { width: "250px" } };
 
-let onLineVers = reactive({});
+const onLineVers = {};
 
 async function getVerLists() {
   const list = await window.aardio.getVerList();
@@ -92,14 +92,15 @@ async function getVerLists() {
 
 const show_list = computed(() => {
   let map = {};
+  console.log(props.keys);
   for (const mapKey in onLineVers.vaule) {
     let k1 = true;
     let k2 = true;
     let k3 = true;
-    if (search.key) {
+    if (search.key.trim() != "") {
       k1 = mapKey.indexOf(search.key) > -1;
     }
-    if (search.nts == 1) {
+    if (search.nts == "1") {
       k2 = mapKey.indexOf("-nts") == -1;
     } else if (search.nts == 2) {
       k2 = mapKey.indexOf("-nts") > 0;
@@ -113,16 +114,14 @@ const show_list = computed(() => {
       map[mapKey] = {
         code: mapKey,
         url: onLineVers.vaule[mapKey],
-        added: props.keys.indexOf(mapKey) > -1,
+        added: props.keys ? props.keys.indexOf(mapKey) > -1 : true,
       };
     }
   }
   return map;
 });
 
-defineExpose({ getVerLists });
-
-//getVerLists();
+getVerLists();
 </script>
 <style>
 .ver-item {
