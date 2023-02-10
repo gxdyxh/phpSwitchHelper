@@ -8,6 +8,7 @@ import {
   Switch,
   Card,
   Modal,
+  Progress,
 } from "ant-design-vue";
 
 let install = function (app, options) {
@@ -20,5 +21,6 @@ let install = function (app, options) {
   app.use(Card);
   app.use(Switch);
   app.use(Modal);
+  app.use(Progress);
 };
 export default install;
